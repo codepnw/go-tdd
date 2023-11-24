@@ -3,40 +3,30 @@ package user
 import (
 	"database/sql"
 	"errors"
-
-	"github.com/codepnw/go-tdd/models"
-	"github.com/codepnw/go-tdd/utils/password"
 )
 
-type User interface {
-	CreateUser(user *User) (*models.User, error)
-	DeleteUserByID(id int64) error
-	FindUserByEmail(email string) (*models.User, error)
-	FindUserByID(email string) (*models.User, error)
-}
-
-type userHandler struct {
+type usersRepository struct {
 	db *sql.DB
 }
 
-func NewUserHandler(db *sql.DB) *userHandler {
-	return &userHandler{db: db}
+func NewUsersRepository(db *sql.DB) IUsersRepository {
+	return &usersRepository{
+		db: db,
+	}
 }
 
 var (
 	sqlCreateUser = `INSERT INTO users (name, email, password)
 		VALUES ($1, $2, $3) RETURNING id, name, email, password;`
-	sqlDeleteUserByID = `DELETE FROM users WHERE id = $1;`
+	sqlDeleteUserByID  = `DELETE FROM users WHERE id = $1;`
 	sqlFindUserByEmail = `SELECT id, name, email, password FROM users WHERE email = $1;`
-	sqlFindUserByID = `SELECT id, name, email, password FROM users WHERE id = $1;`
+	sqlFindUserByID    = `SELECT id, name, email, password FROM users WHERE id = $1;`
 
 	ErrUserNotFound = errors.New("user not found")
 )
 
-func (u *userHandler) CreateUser(user *models.User) (*models.User, error) {
-	user.Password, _ = password.PasswordHash(user.Password)
+func (u *usersRepository) CreateUser(user *User) (*User, error) {
 	err := u.db.QueryRow(sqlCreateUser, user.Name, user.Email, user.Password).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
-
 	if err != nil {
 		return nil, err
 	}
@@ -44,17 +34,16 @@ func (u *userHandler) CreateUser(user *models.User) (*models.User, error) {
 	return user, nil
 }
 
-func (u *userHandler) DeleteUserByID(id int64) error {
+func (u *usersRepository) DeleteUserByID(id int64) error {
 	_, err := u.db.Exec(sqlDeleteUserByID, id)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func (u *userHandler) FindUserByEmail(email string) (*models.User, error) {
-	user := &models.User{}
+func (u *usersRepository) FindUserByEmail(email string) (*User, error) {
+	user := &User{}
 
 	err := u.db.QueryRow(sqlFindUserByEmail, email).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
 	if err != nil {
@@ -67,8 +56,8 @@ func (u *userHandler) FindUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (u *userHandler) FindUserByID(id int64) (*models.User, error) {
-	user := &models.User{}
+func (u *usersRepository) FindUserByID(id int64) (*User, error) {
+	user := &User{}
 
 	err := u.db.QueryRow(sqlFindUserByID, id).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
 	if err != nil {

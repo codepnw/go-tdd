@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/codepnw/go-tdd/cmd/server"
 	"github.com/codepnw/go-tdd/database"
 	"github.com/joho/godotenv"
 )
@@ -13,10 +14,8 @@ func main() {
 		log.Fatal("error loading .env file")
 	}
 
-	_, err = database.ConnectDB()
-	if err != nil {
-		log.Fatal("connection database failed: ", err)
-	}
+	dbConn := database.ConnectDB()
+	dbConn.Close()
 
-	log.Println("Hello..")
+	server.NewServer(dbConn.GetDB()).Start()
 }
