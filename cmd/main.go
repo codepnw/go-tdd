@@ -8,14 +8,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func init() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("error loading .env file")
 	}
+}
 
+func main() {
 	dbConn := database.ConnectDB()
-	dbConn.Close()
+	defer dbConn.Close()
 
 	server.NewServer(dbConn.GetDB()).Start()
 }

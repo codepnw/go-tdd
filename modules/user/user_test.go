@@ -2,8 +2,6 @@ package user
 
 import (
 	"testing"
-
-	"github.com/codepnw/go-tdd/database"
 )
 
 var (
@@ -13,12 +11,11 @@ var (
 	oldSqlFindUserByID    = sqlFindUserByID
 )
 
-var (
-	repo = NewUsersRepository(database.ConnectDB().GetDB())
-	h    = NewUsersUsecase(repo)
-)
-
 func TestCreateUser(t *testing.T) {
+
+	repo := NewUsersRepository(testDB)
+	h := NewUsersUsecase(repo)
+
 	oldPassword := "password"
 
 	user := &CreateUserReq{
@@ -40,9 +37,9 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("expected %q: got %q", user.Name, createdUser.Name)
 	}
 
-	// if createdUser.Password == oldPassword {
-	// 	t.Error("password was not hashed")
-	// }
+	if createdUser.Password == oldPassword {
+		t.Error("password was not hashed")
+	}
 
 	sqlCreateUser = "invalid"
 	_, err = h.CreateUser(user)
@@ -63,5 +60,4 @@ func TestCreateUser(t *testing.T) {
 	}
 	sqlDeleteUserByID = oldSqlDeleteUserByID
 }
-
 
